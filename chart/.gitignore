@@ -1,6 +1,8 @@
 # User overrides
 config.yaml
 config.yml
+charts
+dockerfiles
 
 # Build dir
 repository
