@@ -64,14 +64,11 @@ containerLifecycleHooks: {}
 # Used for mount paths
 airflowHome: /opt/airflow
 
-# Default airflow repository -- overridden by all the specific images below
-defaultAirflowRepository: apache/airflow
-
-# Default airflow tag to deploy
-defaultAirflowTag: "2.10.2"
-
-# Default airflow digest. If specified, it takes precedence over tag
-defaultAirflowDigest: ~
+# Default airflow image
+image:
+  repository: apache/airflow
+  tag: "2.10.2"
+  digest: ~
 
 # Airflow version (Used to make some decisions based on Airflow Version being deployed)
 airflowVersion: "2.10.2"
@@ -81,7 +78,6 @@ images:
   airflow:
     repository: ~
     tag: ~
-    # Specifying digest takes precedence over tag.
     digest: ~
     pullPolicy: IfNotPresent
   # To avoid images with user code, you can turn this to 'true' and
@@ -2644,15 +2640,15 @@ config:
     airflow_configmap: '{{ include "airflow_config" . }}'
     airflow_local_settings_configmap: '{{ include "airflow_config" . }}'
     pod_template_file: '{{ include "airflow_pod_template_file" . }}/pod_template_file.yaml'
-    worker_container_repository: '{{ .Values.images.airflow.repository | default .Values.defaultAirflowRepository }}'
-    worker_container_tag: '{{ .Values.images.airflow.tag | default .Values.defaultAirflowTag }}'
+    worker_container_repository: '{{ .Values.images.airflow.repository | default .Values.image.repository }}'
+    worker_container_tag: '{{ .Values.images.airflow.tag | default .Values.image.tag }}'
     multi_namespace_mode: '{{ ternary "True" "False" .Values.multiNamespaceMode }}'
   # The `kubernetes_executor` section duplicates the `kubernetes` section in Airflow >= 2.5.0 due to an airflow.cfg schema change.
   kubernetes_executor:
     namespace: '{{ .Release.Namespace }}'
     pod_template_file: '{{ include "airflow_pod_template_file" . }}/pod_template_file.yaml'
-    worker_container_repository: '{{ .Values.images.airflow.repository | default .Values.defaultAirflowRepository }}'
-    worker_container_tag: '{{ .Values.images.airflow.tag | default .Values.defaultAirflowTag }}'
+    worker_container_repository: '{{ .Values.images.airflow.repository | default .Values.image.repository }}'
+    worker_container_tag: '{{ .Values.images.airflow.tag | default .Values.image.tag }}'
     multi_namespace_mode: '{{ ternary "True" "False" .Values.multiNamespaceMode }}'
   triggerer:
     default_capacity: 1000

@@ -325,27 +325,27 @@ If release name contains chart name it will be used as a full name.
 
 {{/* This helper will change when customers deploy a new image */}}
 {{- define "airflow_image" -}}
-  {{- $repository := .Values.images.airflow.repository | default .Values.defaultAirflowRepository -}}
-  {{- $tag := .Values.images.airflow.tag | default .Values.defaultAirflowTag -}}
-  {{- $digest := .Values.images.airflow.digest | default .Values.defaultAirflowDigest -}}
+  {{- $repository := .Values.images.airflow.repository | default .Values.image.repository -}}
+  {{- $tag := .Values.images.airflow.tag | default .Values.image.tag -}}
+  {{- $digest := .Values.images.airflow.digest | default .Values.image.digest -}}
   {{- if $digest }}
-    {{- printf "%s@%s" $repository $digest -}}
+    {{- printf "%s:%s@sha256:%s" $repository $tag $digest -}}
   {{- else }}
     {{- printf "%s:%s" $repository $tag -}}
   {{- end }}
 {{- end }}
 
 {{- define "pod_template_image" -}}
-  {{- printf "%s:%s" (.Values.images.pod_template.repository | default .Values.defaultAirflowRepository) (.Values.images.pod_template.tag | default .Values.defaultAirflowTag) }}
+  {{- printf "%s:%s" (.Values.images.pod_template.repository | default .Values.image.repository) (.Values.images.pod_template.tag | default .Values.image.tag) }}
 {{- end }}
 
 {{/* This helper is used for airflow containers that do not need the users code */}}
 {{ define "default_airflow_image" -}}
-  {{- $repository := .Values.defaultAirflowRepository -}}
-  {{- $tag := .Values.defaultAirflowTag -}}
-  {{- $digest := .Values.defaultAirflowDigest -}}
+  {{- $repository := .Values.image.repository -}}
+  {{- $tag := .Values.image.tag -}}
+  {{- $digest := .Values.image.digest -}}
   {{- if $digest }}
-    {{- printf "%s@%s" $repository $digest -}}
+    {{- printf "%s:%s@sha256:%s" $repository $tag $digest -}}
   {{- else }}
     {{- printf "%s:%s" $repository $tag -}}
   {{- end }}
@@ -360,7 +360,7 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{- define "flower_image" -}}
-  {{- printf "%s:%s" (.Values.images.flower.repository | default .Values.defaultAirflowRepository) (.Values.images.flower.tag | default .Values.defaultAirflowTag) }}
+  {{- printf "%s:%s" (.Values.images.flower.repository | default .Values.image.repository) (.Values.images.flower.tag | default .Values.image.tag) }}
 {{- end }}
 
 {{- define "statsd_image" -}}
