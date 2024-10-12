@@ -20,7 +20,7 @@
 ################################
 ## Airflow Redis Service
 #################################
-{{- if and .Values.redis.enabled (or (eq .Values.executor "CeleryExecutor") (eq .Values.executor "CeleryKubernetesExecutor")) }}
+{{- if and .Values.redis.enabled (or (has "CeleryExecutor" (splitList "," .Values.executor)) (has "CeleryKubernetesExecutor" (splitList "," .Values.executor))) }}
 apiVersion: v1
 kind: Service
 metadata:
