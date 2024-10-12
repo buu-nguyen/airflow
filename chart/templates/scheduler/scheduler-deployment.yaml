@@ -22,7 +22,7 @@
 #################################
 {{- if .Values.scheduler.enabled }}
 # Are we using a local executor?
-{{- $local := contains "Local" .Values.executor }}
+{{- $local := has "LocalExecutor" (splitList "," .Values.executor) }}
 # Is persistence enabled on the _workers_?
 # This is important because in $local mode, the scheduler assumes the role of the worker
 {{- $persistence := .Values.workers.persistence.enabled }}
@@ -53,7 +53,6 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    executor: {{ .Values.executor }}
     {{- with .Values.labels }}
       {{- toYaml . | nindent 4 }}
     {{- end }}
