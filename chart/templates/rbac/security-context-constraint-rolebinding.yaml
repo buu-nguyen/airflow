@@ -21,7 +21,7 @@
 ## Airflow SCC Role Binding
 #################################
 {{- if and .Values.rbac.create .Values.rbac.createSCCRoleBinding }}
-{{- $hasWorkers := has .Values.executor (list "CeleryExecutor" "LocalKubernetesExecutor" "KubernetesExecutor" "CeleryKubernetesExecutor") }}
+{{- $hasWorkers := or (has "CeleryExecutor" (splitList "," .Values.executor)) (has "LocalKubernetesExecutor" (splitList "," .Values.executor)) (has "KubernetesExecutor" (splitList "," .Values.executor)) (has "CeleryKubernetesExecutor" (splitList "," .Values.executor)) }}
 apiVersion: rbac.authorization.k8s.io/v1
 {{- if .Values.multiNamespaceMode }}
 kind: ClusterRoleBinding
@@ -67,7 +67,7 @@ subjects:
     name: {{ include "statsd.serviceAccountName" . }}
     namespace: "{{ .Release.Namespace }}"
   {{- end }}
-  {{- if and .Values.flower.enabled (or (eq .Values.executor "CeleryExecutor") (eq .Values.executor "CeleryKubernetesExecutor")) }}
+  {{- if and .Values.flower.enabled (or (has "CeleryExecutor" (splitList "," .Values.executor)) (has "CeleryKubernetesExecutor" (splitList "," .Values.executor))) }}
   - kind: ServiceAccount
     name: {{ include "flower.serviceAccountName" . }}
     namespace: "{{ .Release.Namespace }}"

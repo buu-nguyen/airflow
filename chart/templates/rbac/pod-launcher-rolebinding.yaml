@@ -57,12 +57,12 @@ roleRef:
   name: {{ include "airflow.fullname" . }}-pod-launcher-role
   {{- end }}
 subjects:
-  {{- if has .Values.executor $schedulerLaunchExecutors }}
+  {{- if or (has "LocalExecutor" (splitList "," .Values.executor)) (has "LocalKubernetesExecutor" (splitList "," .Values.executor)) (has "KubernetesExecutor" (splitList "," .Values.executor)) (has "CeleryKubernetesExecutor" (splitList "," .Values.executor)) }}
   - kind: ServiceAccount
     name: {{ include "scheduler.serviceAccountName" . }}
     namespace: "{{ .Release.Namespace }}"
   {{- end }}
-  {{- if has .Values.executor $workerLaunchExecutors }}
+  {{- if or (has "CeleryExecutor" (splitList "," .Values.executor)) (has "LocalKubernetesExecutor" (splitList "," .Values.executor)) (has "KubernetesExecutor" (splitList "," .Values.executor)) (has "CeleryKubernetesExecutor" (splitList "," .Values.executor)) }}
   - kind: ServiceAccount
     name: {{ include "worker.serviceAccountName" . }}
     namespace: "{{ .Release.Namespace }}"
