@@ -2816,6 +2816,22 @@ dags:
     #   cpu: 100m
     #   memory: 128Mi
 
+gitSyncStandalone:
+  enabled: false
+  existingClaim: ~
+  repos: []
+  depth: 1
+  maxFailures: 0
+  period: 5s
+  securityContexts:
+    pod: {}
+    container: {}
+  containerLifecycleHooks: {}
+  env: []
+  extraVolumes: []
+  extraVolumeMounts: []
+  resources: {}
+
 logs:
   # Configuration for empty dir volume (if logs.persistence.enabled == false)
   # emptyDirConfig:
