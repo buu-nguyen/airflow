@@ -147,50 +147,56 @@ spec:
           {{- tpl (toYaml .Values.dagProcessor.extraInitContainers) . | nindent 8 }}
         {{- end }}
       containers:
-        - name: dag-processor
-          image: {{ template "airflow_image" . }}
-          imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
+        {{- $dp_containers := list dict -}}
+        {{- if .Values.multiDagProcessorMode.enabled -}}
+          {{- $dp_containers = .Values.multiDagProcessorMode.containers -}}
+        {{- end -}}
+        {{- range $dp_containers }}
+        - name: {{ default "dag-processor" .name }}
+          image: {{ template "airflow_image" $ }}
+          imagePullPolicy: {{ $.Values.images.airflow.pullPolicy }}
           securityContext: {{ $containerSecurityContext | nindent 12 }}
           {{- if $containerLifecycleHooks  }}
-          lifecycle: {{- tpl (toYaml $containerLifecycleHooks) . | nindent 12 }}
+          lifecycle: {{- tpl (toYaml $containerLifecycleHooks) $ | nindent 12 }}
           {{- end }}
-          {{- if .Values.dagProcessor.command }}
-          command: {{ tpl (toYaml .Values.dagProcessor.command) . | nindent 12 }}
+          {{- if or $.Values.dagProcessor.command .command }}
+          command: {{ tpl (toYaml (default $.Values.dagProcessor.command .command)) $ | nindent 12 }}
           {{- end }}
-          {{- if .Values.dagProcessor.args }}
-          args: {{ tpl (toYaml .Values.dagProcessor.args) . | nindent 12 }}
+          {{- if or $.Values.dagProcessor.args .args }}
+          args: {{- tpl (toYaml (default $.Values.dagProcessor.args .args)) $ | nindent 12 }}
           {{- end }}
-          resources: {{- toYaml .Values.dagProcessor.resources | nindent 12 }}
+          resources: {{- toYaml (default $.Values.dagProcessor.resources .resources) | nindent 12 }}
           volumeMounts:
-            {{- if .Values.volumeMounts }}
-              {{- toYaml .Values.volumeMounts | nindent 12 }}
+            {{- if $.Values.volumeMounts }}
+              {{- toYaml $.Values.volumeMounts | nindent 12 }}
             {{- end }}
-            {{- if .Values.dagProcessor.extraVolumeMounts }}
-              {{- tpl (toYaml .Values.dagProcessor.extraVolumeMounts) . | nindent 12 }}
+            {{- if $.Values.dagProcessor.extraVolumeMounts }}
+              {{- tpl (toYaml $.Values.dagProcessor.extraVolumeMounts) $ | nindent 12 }}
             {{- end }}
             - name: logs
-              mountPath: {{ template "airflow_logs" . }}
-            {{- include "airflow_config_mount" . | nindent 12 }}
-            {{- if or .Values.dags.persistence.enabled .Values.dags.gitSync.enabled }}
-              {{- include "airflow_dags_mount" . | nindent 12 }}
+              mountPath: {{ template "airflow_logs" $ }}
+            {{- include "airflow_config_mount" $ | nindent 12 }}
+            {{- if or $.Values.dags.persistence.enabled $.Values.dags.gitSync.enabled }}
+              {{- include "airflow_dags_mount" $ | nindent 12 }}
             {{- end }}
-          envFrom: {{- include "custom_airflow_environment_from" . | default "\n  []" | indent 10 }}
+          envFrom: {{- include "custom_airflow_environment_from" $ | default "\n  []" | indent 10 }}
           env:
-            {{- include "custom_airflow_environment" . | indent 10 }}
-            {{- include "standard_airflow_environment" . | indent 10 }}
-            {{- include "container_extra_envs" (list . .Values.dagProcessor.env) | indent 10 }}
+            {{- include "custom_airflow_environment" $ | indent 10 }}
+            {{- include "standard_airflow_environment" $ | indent 10 }}
+            {{- include "container_extra_envs" (list $ $.Values.dagProcessor.env) | indent 10 }}
           livenessProbe:
-            initialDelaySeconds: {{ .Values.dagProcessor.livenessProbe.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.dagProcessor.livenessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.dagProcessor.livenessProbe.failureThreshold }}
-            periodSeconds: {{ .Values.dagProcessor.livenessProbe.periodSeconds }}
+            initialDelaySeconds: {{ $.Values.dagProcessor.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ $.Values.dagProcessor.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ $.Values.dagProcessor.livenessProbe.failureThreshold }}
+            periodSeconds: {{ $.Values.dagProcessor.livenessProbe.periodSeconds }}
             exec:
               command:
-                {{- if .Values.dagProcessor.livenessProbe.command }}
-                  {{- toYaml .Values.dagProcessor.livenessProbe.command | nindent 16 }}
+                {{- if $.Values.dagProcessor.livenessProbe.command }}
+                  {{- toYaml $.Values.dagProcessor.livenessProbe.command | nindent 16 }}
                 {{- else }}
-                  {{- include "dag_processor_liveness_check_command" . | indent 14 }}
+                  {{- include "dag_processor_liveness_check_command" $ | indent 14 }}
                 {{- end }}
+        {{- end }}
         {{- if and (.Values.dags.gitSync.enabled) (not .Values.dags.persistence.enabled) }}
           {{- include "git_sync_container" . | indent 8 }}
         {{- end }}

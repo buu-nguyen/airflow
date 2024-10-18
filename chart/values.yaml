@@ -2838,6 +2838,14 @@ gitSyncStandalone:
   extraVolumeMounts: []
   resources: {}
 
+multiDagProcessorMode:
+  enabled: false
+  containers:
+    - name: default
+      command: ~
+      args: ["bash", "-c", "exec airflow dag-processor"]
+      resources: {}
+
 logs:
   # Configuration for empty dir volume (if logs.persistence.enabled == false)
   # emptyDirConfig:
