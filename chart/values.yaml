@@ -2840,7 +2840,7 @@ gitSyncStandalone:
 
 multiDagProcessorMode:
   enabled: false
-  containers:
+  dagProcessors:
     - name: default
       command: ~
       args: ["bash", "-c", "exec airflow dag-processor"]

@@ -11,21 +11,23 @@
 {{- $securityContext := include "airflowPodSecurityContext" (list . .Values.gitSyncStandalone) }}
 {{- $containerSecurityContext := include "containerSecurityContext" (list . .Values.gitSyncStandalone) }}
 {{- $containerLifecycleHooks := or .Values.gitSyncStandalone.containerLifecycleHooks .Values.containerLifecycleHooks }}
+{{- range .Values.gitSyncStandalone.repos }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "airflow.fullname" . }}-git-sync-standalone
+  name: {{ include "airflow.fullname" $ }}-git-sync-{{ .name }}
   labels:
     tier: airflow
     component: git-sync-standalone
-    release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    heritage: {{ .Release.Service }}
-    {{- with .Values.labels }}
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
+    {{- with $.Values.labels }}
       {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- if .Values.gitSyncStandalone.annotations }}
-  annotations: {{- toYaml .Values.gitSyncStandalone.annotations | nindent 4 }}
+  {{- if $.Values.gitSyncStandalone.annotations }}
+  annotations: {{- toYaml $.Values.gitSyncStandalone.annotations | nindent 4 }}
   {{- end }}
 spec:
   replicas: 1
@@ -36,37 +38,37 @@ spec:
     matchLabels:
       tier: airflow
       component: git-sync-standalone
-      release: {{ .Release.Name }}
-  {{- if .Values.gitSyncStandalone.strategy }}
-  strategy: {{- toYaml .Values.gitSyncStandalone.strategy | nindent 4 }}
+      release: {{ $.Release.Name }}
+  {{- if $.Values.gitSyncStandalone.strategy }}
+  strategy: {{- toYaml $.Values.gitSyncStandalone.strategy | nindent 4 }}
   {{- end }}
   template:
     metadata:
       labels:
         tier: airflow
         component: git-sync-standalone
-        release: {{ .Release.Name }}
-        {{- with .Values.labels }}
+        release: {{ $.Release.Name }}
+        {{- with $.Values.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
-        checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") . | sha256sum }}
-        checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}
-        checksum/airflow-config: {{ include (print $.Template.BasePath "/configmaps/configmap.yaml") . | sha256sum }}
-        checksum/extra-configmaps: {{ include (print $.Template.BasePath "/configmaps/extra-configmaps.yaml") . | sha256sum }}
-        checksum/extra-secrets: {{ include (print $.Template.BasePath "/secrets/extra-secrets.yaml") . | sha256sum }}
-        {{- if .Values.gitSyncStandalone.safeToEvict }}
+        checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") $ | sha256sum }}
+        checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") $ | sha256sum }}
+        checksum/airflow-config: {{ include (print $.Template.BasePath "/configmaps/configmap.yaml") $ | sha256sum }}
+        checksum/extra-configmaps: {{ include (print $.Template.BasePath "/configmaps/extra-configmaps.yaml") $ | sha256sum }}
+        checksum/extra-secrets: {{ include (print $.Template.BasePath "/secrets/extra-secrets.yaml") $ | sha256sum }}
+        {{- if $.Values.gitSyncStandalone.safeToEvict }}
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         {{- end }}
-        {{- if .Values.airflowPodAnnotations }}
-          {{- toYaml .Values.airflowPodAnnotations | nindent 8 }}
+        {{- if $.Values.airflowPodAnnotations }}
+          {{- toYaml $.Values.airflowPodAnnotations | nindent 8 }}
         {{- end }}
-        {{- if .Values.gitSyncStandalone.podAnnotations }}
-          {{- toYaml .Values.gitSyncStandalone.podAnnotations | nindent 8 }}
+        {{- if $.Values.gitSyncStandalone.podAnnotations }}
+          {{- toYaml $.Values.gitSyncStandalone.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
-      {{- if .Values.gitSyncStandalone.priorityClassName }}
-      priorityClassName: {{ .Values.gitSyncStandalone.priorityClassName }}
+      {{- if $.Values.gitSyncStandalone.priorityClassName }}
+      priorityClassName: {{ $.Values.gitSyncStandalone.priorityClassName }}
       {{- end }}
       nodeSelector: {{- toYaml $nodeSelector | nindent 8 }}
       affinity:
@@ -82,20 +84,19 @@ spec:
               topologyKey: kubernetes.io/hostname
             weight: 100
       {{- end }}
-      {{- if .Values.schedulerName }}
-      schedulerName: {{ .Values.schedulerName }}
+      {{- if $.Values.schedulerName }}
+      schedulerName: {{ $.Values.schedulerName }}
       {{- end }}
       tolerations: {{- toYaml $tolerations | nindent 8 }}
       topologySpreadConstraints: {{- toYaml $topologySpreadConstraints | nindent 8 }}
-      terminationGracePeriodSeconds: {{ .Values.gitSyncStandalone.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $.Values.gitSyncStandalone.terminationGracePeriodSeconds }}
       restartPolicy: Always
       securityContext: {{ $securityContext | nindent 8 }}
-      {{- if or .Values.registry.secretName .Values.registry.connection }}
+      {{- if or $.Values.registry.secretName $.Values.registry.connection }}
       imagePullSecrets:
-        - name: {{ template "registry_secret" . }}
+        - name: {{ template "registry_secret" $ }}
       {{- end }}
       containers:
-        {{- range .Values.gitSyncStandalone.repos }}
         - name: {{ .name }}
           image: {{ template "git_sync_image" $ }}
           imagePullPolicy: {{ $.Values.images.gitSync.pullPolicy }}
@@ -135,12 +136,12 @@ spec:
           {{- if $.Values.gitSyncStandalone.extraVolumeMounts }}
             {{- tpl (toYaml $.Values.gitSyncStandalone.extraVolumeMounts) $ | nindent 12 }}
           {{- end }}
-        {{- end }}
       volumes:
         - name: git-data
           persistentVolumeClaim:
-            claimName: {{ .Values.gitSyncStandalone.existingClaim }}
-        {{- if .Values.gitSyncStandalone.extraVolumes }}
-          {{- tpl (toYaml .Values.gitSyncStandalone.extraVolumes) . | nindent 8 }}
+            claimName: {{ $.Values.gitSyncStandalone.existingClaim }}
+        {{- if $.Values.gitSyncStandalone.extraVolumes }}
+          {{- tpl (toYaml $.Values.gitSyncStandalone.extraVolumes) $ | nindent 8 }}
         {{- end }}
+{{- end }}
 {{- end }}
